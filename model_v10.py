@@ -61,8 +61,8 @@ def compute_bert_surprisal(all_df, cache_path, model_name):
     import torch
     from transformers import AutoTokenizer, AutoModelForMaskedLM
 
-    device = ('mps' if torch.backends.mps.is_available()
-              else 'cuda' if torch.cuda.is_available() else 'cpu')
+    # MPS crashes with BERT MLM on Apple Silicon — force CPU
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print("BERT device:", device)
 
     print("Loading Romanian BERT model ({})...".format(model_name))
