@@ -162,14 +162,16 @@ def compute_bert_surprisal(all_df, cache_path, model_name):
     print("BERT surprisal cached to:", cache_path)
     return surp_df
 
-# Load or compute BERT surprisal
+# Load BERT surprisal from cache (compute_bert.py must be run first)
 all_df = pd.concat([raw_train, raw_test], ignore_index=True)
 if os.path.exists(args.bert_cache):
     print("Loading BERT surprisal from cache:", args.bert_cache)
     bert_surp = pd.read_csv(args.bert_cache)
 else:
-    print("Cache not found. Computing BERT surprisal (first time only, ~20-40 min)...")
-    bert_surp = compute_bert_surprisal(all_df, args.bert_cache, args.bert_model)
+    print("ERROR: BERT cache not found. Run this first:")
+    print("  .venv/bin/python compute_bert.py")
+    print("Then re-run model_v10.py.")
+    raise SystemExit(1)
 
 # Merge BERT surprisal
 raw_train = raw_train.merge(bert_surp, on='word_key', how='left')
