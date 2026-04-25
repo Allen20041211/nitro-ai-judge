@@ -24,7 +24,7 @@ parser.add_argument('--train',  default='/Users/renyihuang/NLP/train_data.csv')
 parser.add_argument('--test',   default='/Users/renyihuang/NLP/test_data.csv')
 parser.add_argument('--output', default='/Users/renyihuang/NLP/submission_v10.csv')
 parser.add_argument('--bert-cache', default='/Users/renyihuang/NLP/bert_surprisal_cache.csv')
-parser.add_argument('--bert-model', default='dumitrescuv/bert-base-romanian-cased-v1')
+parser.add_argument('--bert-model', default='bert-base-multilingual-cased')
 args = parser.parse_args()
 
 # ============================================================
