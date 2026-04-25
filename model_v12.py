@@ -144,10 +144,16 @@ RO_SUFFIXES_NOUN = ['ului','ilor','elor','iile','itor','ătoare']
 RO_SUFFIXES_VERB = ['ează','esc','ăsc','ste','ete','ăm','ați']
 
 all_words = set(raw_train['word_lower'].dropna()) | set(raw_test['word_lower'].dropna())
-print("Building wordfreq cache ({} unique words)...".format(len(all_words)))
+print("Building wordfreq + subword cache ({} unique words)...".format(len(all_words)))
 zipf_ro_cache = {w: zipf_frequency(w, 'ro') for w in all_words}
 zipf_en_cache = {w: zipf_frequency(w, 'en') for w in all_words}
 freq_ro_cache = {w: word_frequency(w, 'ro')  for w in all_words}
+
+# Subword token count from BERT tokenizer (paper's 4th strongest predictor)
+from transformers import AutoTokenizer as _AutoTok
+_bert_tok = _AutoTok.from_pretrained('bert-base-multilingual-cased')
+subword_cache = {w: len(_bert_tok(str(w), add_special_tokens=False)['input_ids']) for w in all_words}
+print("Subword cache built.")
 
 text_len_map = (raw_train.drop_duplicates('word_key')
                 .groupby('text')['word_key'].count().rename('text_n_words'))
@@ -201,6 +207,9 @@ def add_structural_features(df):
     df['is_common']       = (df['zipf_ro'] > 4).astype(float)
     df['zipf_x_len']      = df['zipf_ro'] * df['word_len']
     df['zipf_x_syl']      = df['zipf_ro'] * df['n_syllables']
+    df['n_subword_tokens']= wl.map(subword_cache).fillna(1).astype(float)
+    df['subword_log']     = np.log1p(df['n_subword_tokens'])
+    df['subword_x_surp']  = df['n_subword_tokens'] * df['bert_surprisal']
     df['page_num']        = df['word_key'].str.split('_').apply(lambda x: float(x[-2]) if len(x)>=2 else 0.0)
     df['word_pos_log']    = np.log1p(df['word_pos'])
     df['word_pos_sq']     = df['word_pos'] ** 2
@@ -436,6 +445,7 @@ FEATURES = [
     'has_ro_prefix','has_noun_suffix','has_verb_suffix',
     'zipf_ro','zipf_en','zipf_max','freq_log',
     'is_unknown_ro','is_rare','is_very_rare','is_common','zipf_x_len','zipf_x_syl',
+    'n_subword_tokens','subword_log','subword_x_surp',
     # BERT surprisal (key features)
     'bert_surprisal','bert_x_part_spd','bert_x_zipf','bert_x_len','bert_x_skip',
     'prev_bert_surp','next_bert_surp','rel_bert_surp','text_mean_bert',
